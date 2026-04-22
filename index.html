@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Physics of Baseball</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0c0c;
+  --bg2: #131313;
+  --bg3: #1a1a1a;
+  --text: #f0ebe0;
+  --muted: #706a60;
+  --amber: #c8882a;
+  --amber-l: #e8a84a;
+  --blue: #5eb8c8;
+  --green: #4a9e6b;
+  --red: #c85050;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background:var(--bg);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  font-weight:300;
+  line-height:1.7;
+  overflow-x:hidden;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:80px 72px;
+  position:relative;
+  overflow:hidden;
+}
+.hero-bg {
+  position:absolute;
+  inset:0;
+  background:radial-gradient(ellipse 60% 80% at 20% 60%, rgba(200,136,42,0.05) 0%, transparent 70%);
+  pointer-events:none;
+}
+.hero-seam-svg {
+  position:absolute;
+  right:-80px;
+  top:50%;
+  transform:translateY(-50%);
+  width:520px;
+  height:520px;
+  opacity:0.035;
+  pointer-events:none;
+}
+.hero-eyebrow {
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:var(--amber);
+  margin-bottom:28px;
+}
+.hero-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(56px,9vw,112px);
+  font-weight:700;
+  line-height:0.93;
+  max-width:860px;
+  margin-bottom:36px;
+}
+.hero-title em { font-style:italic; color:var(--amber); }
+.hero-sub {
+  font-size:17px;
+  font-weight:300;
+  color:var(--muted);
+  max-width:500px;
+  line-height:1.65;
+  margin-bottom:64px;
+}
+.hero-stats { display:flex; gap:52px; flex-wrap:wrap; }
+.hstat-num {
+  font-family:'DM Mono',monospace;
+  font-size:34px;
+  color:var(--blue);
+  display:block;
+  line-height:1;
+  margin-bottom:6px;
+}
+.hstat-label { font-size:12px; color:var(--muted); }
+.hero-scroll {
+  position:absolute;
+  bottom:40px; left:72px;
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:0.18em;
+  color:var(--muted);
+}
+.hero-scroll span {
+  display:block;
+  width:1px;
+  height:40px;
+  background:var(--muted);
+  margin-top:8px;
+  animation:sl 2.2s ease-in-out infinite;
+}
+@keyframes sl { 0%,100%{opacity:.25;transform:scaleY(1)} 50%{opacity:.8;transform:scaleY(1.15)} }
+
+/* ── NAV ── */
+nav {
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:rgba(12,12,12,0.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 72px;
+  display:flex;
+  gap:0;
+  overflow-x:auto;
+}
+nav a {
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--muted);
+  text-decoration:none;
+  padding:16px 20px;
+  white-space:nowrap;
+  transition:color .2s;
+  border-bottom:2px solid transparent;
+}
+nav a:hover { color:var(--text); }
+nav a.active { color:var(--amber); border-bottom-color:var(--amber); }
+
+/* ── SECTIONS ── */
+.section {
+  padding:100px 72px;
+  max-width:1140px;
+  margin:0 auto;
+  opacity:0;
+  transform:translateY(28px);
+  transition:opacity .75s ease, transform .75s ease;
+}
+.section.visible { opacity:1; transform:translateY(0); }
+hr.divider { border:none; border-top:1px solid var(--border); }
+.sec-num {
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:.22em;
+  color:var(--amber);
+  margin-bottom:14px;
+}
+.sec-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(38px,5vw,62px);
+  font-weight:600;
+  line-height:1.05;
+  margin-bottom:20px;
+}
+.sec-title em { font-style:italic; color:var(--amber); }
+.sec-intro {
+  font-size:17px;
+  color:var(--muted);
+  max-width:620px;
+  line-height:1.75;
+  margin-bottom:56px;
+}
+.body-text {
+  font-size:16px;
+  line-height:1.85;
+  max-width:660px;
+  margin-bottom:24px;
+  color:rgba(240,235,224,.82);
+}
+.pullquote {
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(26px,3.2vw,38px);
+  font-style:italic;
+  line-height:1.35;
+  border-left:2px solid var(--amber);
+  padding-left:28px;
+  margin:56px 0;
+  max-width:680px;
+}
+
+/* ── STATS ROW ── */
+.stat-row { display:flex; gap:16px; margin:40px 0; flex-wrap:wrap; }
+.stat-card {
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:20px 24px;
+  min-width:140px;
+}
+.stat-card-num {
+  font-family:'DM Mono',monospace;
+  font-size:32px;
+  font-weight:500;
+  color:var(--blue);
+  display:block;
+  line-height:1;
+  margin-bottom:7px;
+}
+.stat-card-label { font-size:11px; color:var(--muted); letter-spacing:.04em; }
+
+/* ── INTERACTIVE PANELS ── */
+.panel {
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:36px;
+  margin:40px 0;
+}
+.panel-label {
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:.2em;
+  color:var(--amber);
+  margin-bottom:20px;
+}
+
+/* pitch buttons */
+.pitch-btns { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:28px; }
+.pbtn {
+  background:transparent;
+  border:1px solid var(--border2);
+  color:var(--muted);
+  font-family:'DM Sans',sans-serif;
+  font-size:12px;
+  padding:7px 16px;
+  border-radius:3px;
+  cursor:pointer;
+  transition:all .2s;
+}
+.pbtn:hover { color:var(--text); border-color:rgba(255,255,255,.25); }
+.pbtn.active { border-color:var(--amber); color:var(--amber); background:rgba(200,136,42,.08); }
+
+.pitch-layout { display:grid; grid-template-columns:1fr 1fr; gap:32px; align-items:center; }
+@media(max-width:700px){ .pitch-layout { grid-template-columns:1fr; } }
+
+.pitch-data { margin-top:8px; }
+.prow {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:9px 0; border-bottom:1px solid var(--border);
+}
+.prow-key { font-size:12px; color:var(--muted); }
+.prow-val { font-family:'DM Mono',monospace; font-size:13px; color:var(--text); }
+.prow-bar {
+  height:3px; background:var(--bg3); border-radius:2px; margin-top:4px;
+  overflow:hidden;
+}
+.prow-fill { height:100%; border-radius:2px; transition:width .4s ease; }
+
+/* sliders */
+.slider-row { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+.slider-lbl { font-size:12px; color:var(--muted); min-width:110px; }
+input[type=range] {
+  flex:1; -webkit-appearance:none; height:2px;
+  background:var(--border2); border-radius:2px; outline:none; cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:15px; height:15px;
+  background:var(--amber); border-radius:50%; transition:transform .15s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.25); }
+.slider-val {
+  font-family:'DM Mono',monospace; font-size:13px;
+  color:var(--blue); min-width:68px; text-align:right;
+}
+
+.result-bar {
+  margin-top:24px; padding:18px 22px;
+  background:var(--bg3); border-radius:4px;
+  border-left:2px solid var(--amber);
+  display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+}
+.result-num {
+  font-family:'DM Mono',monospace; font-size:46px;
+  font-weight:500; color:var(--blue); line-height:1;
+}
+.result-lbl { font-size:13px; color:var(--muted); }
+.result-tag {
+  margin-left:auto; font-family:'DM Mono',monospace;
+  font-size:10px; letter-spacing:.08em; padding:4px 10px; border-radius:2px;
+}
+.tag-weak { background:rgba(200,80,80,.15); color:var(--red); }
+.tag-avg  { background:rgba(94,184,200,.15); color:var(--blue); }
+.tag-hard { background:rgba(74,158,107,.15); color:var(--green); }
+.tag-barrel { background:rgba(200,136,42,.18); color:var(--amber-l); }
+
+/* defense cards */
+.def-grid {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:16px; margin:40px 0;
+}
+@media(max-width:700px){ .def-grid { grid-template-columns:1fr; } }
+.def-card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:4px; padding:28px;
+}
+.def-card-n {
+  font-family:'Cormorant Garamond',serif;
+  font-size:52px; font-weight:700;
+  color:var(--amber); opacity:.2; line-height:1; margin-bottom:10px;
+}
+.def-card-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:20px; margin-bottom:8px;
+}
+.def-card-body { font-size:13px; color:var(--muted); line-height:1.65; }
+
+/* park factor table */
+.park-table { width:100%; border-collapse:collapse; margin-top:24px; font-size:13px; }
+.park-table th {
+  font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted); text-align:left;
+  padding:10px 12px; border-bottom:1px solid var(--border2);
+}
+.park-table td { padding:10px 12px; border-bottom:1px solid var(--border); }
+.park-table td.pos { color:var(--green); font-family:'DM Mono',monospace; }
+.park-table td.neg { color:var(--red); font-family:'DM Mono',monospace; }
+.park-table td.neu { color:var(--muted); font-family:'DM Mono',monospace; }
+.park-table tr:last-child td { border-bottom:none; }
+
+footer {
+  border-top:1px solid var(--border); padding:48px 72px;
+  text-align:center; font-size:12px; color:var(--muted); line-height:1.8;
+}
+canvas { display:block; max-width:100%; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero" id="top">
+  <div class="hero-bg"></div>
+  <svg class="hero-seam-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="100" cy="100" r="95" stroke="white" stroke-width="3"/>
+    <path d="M60 20 Q80 60 60 100 Q40 140 60 180" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <path d="M140 20 Q120 60 140 100 Q160 140 140 180" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <path d="M20 60 Q60 80 100 60 Q140 40 180 60" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <path d="M20 140 Q60 120 100 140 Q140 160 180 140" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  </svg>
+  <p class="hero-eyebrow">A fan's guide</p>
+  <h1 class="hero-title">The Physics<br>of <em>Baseball</em></h1>
+  <p class="hero-sub">From the pitcher's grip to the outfielder's first step — how the game actually works, explained for people who love watching it.</p>
+  <div class="hero-stats">
+    <div>
+      <span class="hstat-num">0.40s</span>
+      <span class="hstat-label">pitch flight time at 95 mph</span>
+    </div>
+    <div>
+      <span class="hstat-num">1ms</span>
+      <span class="hstat-label">duration of bat-ball contact</span>
+    </div>
+    <div>
+      <span class="hstat-num">41°</span>
+      <span class="hstat-label">Stanton's launch angle</span>
+    </div>
+    <div>
+      <span class="hstat-num">2,300</span>
+      <span class="hstat-label">avg fastball RPM</span>
+    </div>
+  </div>
+  <p class="hero-scroll">SCROLL<span></span></p>
+</section>
+
+<!-- ═══════════════ NAV ═══════════════ -->
+<nav id="mainnav">
+  <a href="#pitch" class="active">01 — The Pitch</a>
+  <a href="#decision">02 — The Decision</a>
+  <a href="#contact">03 — The Contact</a>
+  <a href="#arc">04 — The Arc</a>
+  <a href="#defense">05 — The Defense</a>
+</nav>
+
+<hr class="divider">
+
+<!-- ═══════════════ SECTION 1: THE PITCH ═══════════════ -->
+<section class="section" id="pitch">
+  <p class="sec-num">01 — THE PITCH</p>
+  <h2 class="sec-title">The ball doesn't<br>travel in a <em>straight line</em></h2>
+  <p class="sec-intro">Every pitch is a physics experiment. The moment a pitcher releases the ball, spin creates forces that bend, sink, or cut the ball away from where gravity alone would take it.</p>
+
+  <p class="body-text">The engine behind all of it is the <strong style="color:var(--text);font-weight:500">Magnus effect</strong>. When a spinning ball moves through air, one side creates higher air pressure and the other lower. That pressure difference becomes a force — and that force is what makes a curveball dive, a fastball "rise," and a slider cut late.</p>
+  <p class="body-text">The type of pitch is really just a description of which way the ball is spinning, and how fast. The grip determines the spin. The spin determines the movement. All of it unfolds in about 60 feet.</p>
+
+  <div class="pullquote">"The four-seam fastball doesn't actually rise. It just drops less than your brain expects — and that difference is everything."</div>
+
+  <div class="panel">
+    <p class="panel-label">Interactive — Select a pitch type</p>
+    <div class="pitch-btns">
+      <button class="pbtn active" onclick="setPitch('fastball',this)">4-Seam Fastball</button>
+      <button class="pbtn" onclick="setPitch('sinker',this)">Sinker / 2-Seam</button>
+      <button class="pbtn" onclick="setPitch('cutter',this)">Cutter</button>
+      <button class="pbtn" onclick="setPitch('slider',this)">Slider</button>
+      <button class="pbtn" onclick="setPitch('curve',this)">Curveball</button>
+      <button class="pbtn" onclick="setPitch('change',this)">Changeup</button>
+    </div>
+    <div class="pitch-layout">
+      <canvas id="pitchCanvas" width="280" height="280"></canvas>
+      <div>
+        <div class="pitch-data" id="pitchData"></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="body-text">Spin rate matters as much as velocity. A pitcher throwing 91 mph with 2,600 RPM of backspin can be more effective than one throwing 96 mph at 2,100 RPM — because the high-spin ball loses less altitude and batters consistently swing under it.</p>
+
+  <div class="stat-row">
+    <div class="stat-card">
+      <span class="stat-card-num">93.5</span>
+      <span class="stat-card-label">avg MLB fastball velocity (mph)</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-num">2,300</span>
+      <span class="stat-card-label">avg fastball spin rate (RPM)</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-num">~12"</span>
+      <span class="stat-card-label">vertical "rise" vs gravity-only path</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-num">3,000+</span>
+      <span class="stat-card-label">RPM — elite spin tier</span>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════════════ SECTION 2: THE DECISION ═══════════════ -->
+<section class="section" id="decision">
+  <p class="sec-num">02 — THE DECISION</p>
+  <h2 class="sec-title">The hitter has<br><em>0.17 seconds</em> to decide</h2>
+  <p class="sec-intro">A 95 mph fastball takes about 0.40 seconds to travel 60.5 feet. The hitter must decide whether to swing at roughly the halfway mark — before the ball is even close.</p>
+
+  <p class="body-text">The swing itself takes about 0.15–0.17 seconds once committed. Which means the decision to swing has to be made around 0.17 seconds after release. After that, the motor command is already traveling down the nervous system. The hitter can't physically stop it in time.</p>
+  <p class="body-text">So the hitter isn't watching the full flight of the ball. They're reading the <em style="color:var(--amber-l)">first 20 feet</em> and making a prediction about where the next 40 feet will go. That prediction is built from three things happening in parallel.</p>
+
+  <div class="panel">
+    <p class="panel-label">Interactive — Drag the marker to see the decision window</p>
+    <canvas id="timelineCanvas" width="760" height="160" style="max-width:100%"></canvas>
+    <div style="margin-top:12px">
+      <input type="range" min="0" max="100" value="0" id="timelineSlider" oninput="updateTimeline(this.value)" style="width:100%">
+    </div>
+    <div id="timelineStatus" style="margin-top:16px; font-family:'DM Mono',monospace; font-size:13px; color:var(--muted); min-height:20px;"></div>
+  </div>
+
+  <div class="stat-row" style="margin-top:48px">
+    <div class="stat-card" style="flex:1;min-width:200px">
+      <span class="stat-card-num" style="font-size:20px;color:var(--amber)">Release point</span>
+      <p style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6">Arm slot, hand angle, wrist snap — experienced hitters read pitch type before the ball even leaves the hand.</p>
+    </div>
+    <div class="stat-card" style="flex:1;min-width:200px">
+      <span class="stat-card-num" style="font-size:20px;color:var(--amber)">Spin recognition</span>
+      <p style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6">The seam pattern creates a visible "dot" as the ball rotates. Each pitch type has a different dot. Hitters train to recognize it in milliseconds.</p>
+    </div>
+    <div class="stat-card" style="flex:1;min-width:200px">
+      <span class="stat-card-num" style="font-size:20px;color:var(--amber)">The tunnel</span>
+      <p style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6">All pitches look identical for the first ~20 feet. Elite pitchers throw fastballs and breaking balls through the exact same corridor — so the hitter can't tell which is which until it's too late.</p>
+    </div>
+  </div>
+
+  <p class="body-text">The changeup is the ultimate manipulation of this system. It mimics a fastball's arm action, release point, spin dot, and first 20 feet of flight — but arrives 10–12 mph slower. The hitter's brain fires the swing trigger on time. The ball is nowhere near the plate. There's nothing they can do.</p>
+
+  <div class="pullquote">"Veterans lay off the slider in the dirt because they've seen the spin dot a thousand times. The rookie chases it. That's the whole game."</div>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════════════ SECTION 3: THE CONTACT ═══════════════ -->
+<section class="section" id="contact">
+  <p class="sec-num">03 — THE CONTACT</p>
+  <h2 class="sec-title">One millisecond.<br><em>Everything</em> decided.</h2>
+  <p class="sec-intro">The ball compresses to roughly half its diameter on impact, stores energy like a spring, and releases it in a new direction. The whole collision lasts one millisecond.</p>
+
+  <p class="body-text">That compression-and-release is called the <strong style="color:var(--text);font-weight:500">coefficient of restitution</strong> — essentially the ball's bounciness rating. About 25% of the collision energy escapes as heat and sound. That crack you hear at the park? That's energy leaving the system. Wooden bats crack louder than aluminum partly because wood flexes more, and flex means more energy lost.</p>
+  <p class="body-text">The single biggest factor in how hard a ball is hit is bat speed — not pitch speed. The hitter's swing contributes roughly 60% of the exit velocity. A 95 mph fastball helps, but a hitter with elite bat speed will crush a 85 mph changeup just as well.</p>
+
+  <div class="panel">
+    <p class="panel-label">Interactive — Exit velocity calculator</p>
+    <div class="slider-row">
+      <span class="slider-lbl">Bat speed</span>
+      <input type="range" min="55" max="85" value="70" step="1" id="batSpeedSlider" oninput="updateEV()">
+      <span class="slider-val" id="batSpeedVal">70 mph</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-lbl">Pitch speed</span>
+      <input type="range" min="65" max="102" value="92" step="1" id="pitchSpeedSlider" oninput="updateEV()">
+      <span class="slider-val" id="pitchSpeedVal">92 mph</span>
+    </div>
+    <div class="result-bar">
+      <span class="result-num" id="evResult">97</span>
+      <span class="result-lbl">mph exit velocity</span>
+      <span class="result-tag" id="evTag">hard hit</span>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:16px">Assumes sweet-spot contact at optimal angle. Formula approximated from MLB Statcast modeling.</p>
+  </div>
+
+  <p class="body-text">The sweet spot — technically called the <strong style="color:var(--text);font-weight:500">center of percussion</strong> — is about 5–7 inches from the barrel end. Hit there and the energy transfer is clean: no sting, no vibration, maximum rebound. Hit off the sweet spot and the bat vibrates. You feel it in your hands and you lose power. That stinging broken-bat pop is the sound of a handle hit.</p>
+
+  <div class="stat-row">
+    <div class="stat-card">
+      <span class="stat-card-num">95+</span>
+      <span class="stat-card-label">mph — "hard hit" threshold (Statcast)</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-num">98+</span>
+      <span class="stat-card-label">mph — barrel zone begins</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-num">~25%</span>
+      <span class="stat-card-label">energy lost as heat + sound</span>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════════════ SECTION 4: THE ARC ═══════════════ -->
+<section class="section" id="arc">
+  <p class="sec-num">04 — THE ARC</p>
+  <h2 class="sec-title">Launch angle.<br>Why <em>degrees</em> matter.</h2>
+  <p class="sec-intro">Once the ball leaves the bat, gravity, air resistance, and the ball's own backspin determine everything. The angle at launch is the single biggest predictor of where it ends up.</p>
+
+  <p class="body-text">Broadcasters started mentioning launch angle regularly after Statcast rolled out in 2015. Before that, exit velocity and angle were invisible to fans — you could only watch where the ball went. Now we can see the physics in real time. On April 21, 2026, Yankees slugger Giancarlo Stanton broke out of a slump against the Red Sox with a ball launched at 41 degrees — and the booth noted that a similar hit from pitcher Trevor Bauer had gone 42 degrees just days before. One degree. The difference in carry between those two balls was meaningful enough to talk about on air.</p>
+
+  <div class="panel">
+    <p class="panel-label">Interactive — Launch angle explorer</p>
+    <div class="slider-row">
+      <span class="slider-lbl">Launch angle</span>
+      <input type="range" min="0" max="55" value="35" step="1" id="angleSlider" oninput="updateArc()">
+      <span class="slider-val" id="angleVal">35°</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-lbl">Exit velocity</span>
+      <input type="range" min="70" max="115" value="105" step="1" id="evSlider" oninput="updateArc()">
+      <span class="slider-val" id="evVal">105 mph</span>
+    </div>
+    <canvas id="arcCanvas" width="760" height="260" style="max-width:100%;margin-top:8px"></canvas>
+    <div id="arcStatus" style="margin-top:14px;font-family:'DM Mono',monospace;font-size:13px;color:var(--blue);min-height:20px;"></div>
+  </div>
+
+  <p class="body-text">The optimal launch angle for a home run is roughly 25–35 degrees — high enough to carry, low enough that it's not a pop-up. Stanton's 41 degrees is still in HR territory because his exit velocity is so extreme that even a slightly high angle carries. For most hitters, 41 degrees is a deep fly ball out.</p>
+  <p class="body-text">The 1-degree difference between Stanton's 41 and the broadcaster's Bauer comparison at 42 degrees matters more than it sounds. Air resistance increases exponentially with height — a ball launched at 42 degrees peaks higher, spends more time fighting drag on the way down, and loses more total distance. At elite exit velocities, one degree can mean 8–10 feet of carry.</p>
+
+  <div class="pullquote">"Exit velocity tells you how hard it was hit. Launch angle tells you if it means anything."</div>
+
+  <div class="stat-row">
+    <div class="stat-card">
+      <span class="stat-card-num">&lt;10°</span>
+      <span class="stat-card-label">ground ball — fields easily or gaps</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-num">10–25°</span>
+      <span class="stat-card-label">line drive — hardest for fielders</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-num">25–35°</span>
+      <span class="stat-card-label">optimal home run window</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-num">35–50°</span>
+      <span class="stat-card-label">deep fly / pop-up territory</span>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════════════ SECTION 5: THE DEFENSE ═══════════════ -->
+<section class="section" id="defense">
+  <p class="sec-num">05 — THE DEFENSE</p>
+  <h2 class="sec-title">The outfielder<br>decides in <em>under a second</em></h2>
+  <p class="sec-intro">Before the ball reaches its peak, the outfielder already knows roughly where it's going to land. They're reading the same physics — from the other direction.</p>
+
+  <p class="body-text">There's a common misconception that good outfielders are just fast. Speed helps once you know where to go — but the elite outfielders' real skill is the <strong style="color:var(--text);font-weight:500">first step</strong>. They read the crack of the bat, the angle of the ball's departure, and the early arc within the first 200–300 milliseconds. That first step — forward, back, or lateral — is almost always right before the ball is 30 feet in the air.</p>
+
+  <div class="def-grid">
+    <div class="def-card">
+      <div class="def-card-n">01</div>
+      <div class="def-card-title">Sound and contact angle</div>
+      <div class="def-card-body">The crack of the bat gives an outfielder an immediate read on exit velocity. A sharp crack means hard contact. Combined with the visual of the launch angle, the fielder's brain is already triangulating a landing zone before the ball clears the infield.</div>
+    </div>
+    <div class="def-card">
+      <div class="def-card-n">02</div>
+      <div class="def-card-title">The optical acceleration rule</div>
+      <div class="def-card-body">Outfielders track the ball's visual "acceleration" against the sky. If the ball appears to be accelerating upward in their field of vision, it will land behind them — run back. If it appears to decelerate or hang, it will land in front — charge forward. This is called optical acceleration cancellation, and it's instinctive after years of reps.</div>
+    </div>
+    <div class="def-card">
+      <div class="def-card-n">03</div>
+      <div class="def-card-title">Park, wind, and sun</div>
+      <div class="def-card-body">Every outfielder knows their park's dimensions and quirks cold. Oracle Park's right field is a short porch with a weird bounce off the brick wall. Minute Maid has a flagpole in play. Wind direction changes carry by 20–30 feet. Sun angles shift inning by inning. The great ones adjust in real time.</div>
+    </div>
+  </div>
+
+  <p class="body-text">Park factors are real and measurable. A ball hit with identical exit velocity and angle will travel different distances in different stadiums — because of altitude, humidity, temperature, and dimensions. Coors Field in Denver sits at 5,280 feet above sea level, which means the air is roughly 15% thinner. That alone adds about 10–15% to fly ball distance, which is why it's the most notorious hitter's park in baseball.</p>
+
+  <table class="park-table">
+    <thead>
+      <tr>
+        <th>Park</th>
+        <th>City</th>
+        <th>Altitude (ft)</th>
+        <th>HR factor vs avg</th>
+        <th>Known for</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Coors Field</td>
+        <td>Denver</td>
+        <td>5,280</td>
+        <td class="pos">+28%</td>
+        <td>Extreme hitter's park — thin air</td>
+      </tr>
+      <tr>
+        <td>Great American Ball Park</td>
+        <td>Cincinnati</td>
+        <td>490</td>
+        <td class="pos">+18%</td>
+        <td>Short fences, river humidity</td>
+      </tr>
+      <tr>
+        <td>Yankee Stadium</td>
+        <td>New York</td>
+        <td>55</td>
+        <td class="pos">+14%</td>
+        <td>Short right field porch</td>
+      </tr>
+      <tr>
+        <td>Dodger Stadium</td>
+        <td>Los Angeles</td>
+        <td>512</td>
+        <td class="neu">+2%</td>
+        <td>Neutral, slight pitcher lean at night</td>
+      </tr>
+      <tr>
+        <td>Oracle Park</td>
+        <td>San Francisco</td>
+        <td>52</td>
+        <td class="neg">−12%</td>
+        <td>Cold ocean air, deep outfield</td>
+      </tr>
+      <tr>
+        <td>Petco Park</td>
+        <td>San Diego</td>
+        <td>62</td>
+        <td class="neg">−16%</td>
+        <td>Marine layer suppresses carry</td>
+      </tr>
+      <tr>
+        <td>Comerica Park</td>
+        <td>Detroit</td>
+        <td>600</td>
+        <td class="neg">−18%</td>
+        <td">Deep center, wide gaps</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="body-text" style="margin-top:32px">Oracle Park is one of the hardest places in baseball to hit a home run — and it's also where this writer first fell in love with the game. Not from the stands, but from behind the camera during a Giants internship, cutting replay footage on the EVS machine while the game was live, learning that the vibes of a ballpark — the brick, the bay air, the seagulls — are as much a part of baseball as the physics. The cold air off the bay is denser than most MLB cities, which means more drag on fly balls. Combined with the deep outfield dimensions, a ball that leaves the yard in most parks just dies at the warning track at China Basin. It's one reason Giants teams have historically been built around pitching and defense over power.</p>
+
+  <div class="pullquote">"There's a reason they put the brick wall, the bay, and McCovey Cove out there. The park is part of the physics."</div>
+</section>
+
+<hr class="divider">
+
+<footer>
+  <p>Built on a conversation about the physics of baseball — inspired by a morning with leftover bacon miso rigatoni and the MLB Recap Rundown.</p>
+  <p style="margin-top:8px">Data references: MLB Statcast, Baseball Savant, FanGraphs Park Factors.</p>
+</footer>
+
+<script>
+// ─── PITCH CANVAS ───
+const PITCHES = {
+  fastball: {
+    name:'4-Seam Fastball', spin:'Backspin', velo:'92–102', rpm:'2,200–2,800',
+    move:'Minimal drop — "rises" vs gravity', break:'none',
+    spinDir: -1, spinAxis: 'back', color:'#5eb8c8', moveX:0, moveY:-1,
+    desc:'All 4 seams cut air each rotation — maximizes Magnus lift'
+  },
+  sinker: {
+    name:'Sinker / 2-Seam', spin:'Topspin + sidespin', velo:'88–95', rpm:'1,900–2,400',
+    move:'Down and arm-side', break:'down-in',
+    spinDir: 1, spinAxis: 'top', color:'#c85050', moveX:0.5, moveY:1,
+    desc:'2 seams per rotation — asymmetric, produces sharp sink'
+  },
+  cutter: {
+    name:'Cutter', spin:'Slight cut/sidespin', velo:'88–94', rpm:'2,100–2,500',
+    move:'Small late glove-side cut', break:'cut',
+    spinDir: -1, spinAxis: 'cut', color:'#c8882a', moveX:-0.5, moveY:0,
+    desc:'Looks like a fastball, breaks 2–4 inches late — eats barrels'
+  },
+  slider: {
+    name:'Slider', spin:'Sidespin', velo:'82–92', rpm:'2,200–2,700',
+    move:'Sharp lateral break', break:'lateral',
+    spinDir: 1, spinAxis: 'side', color:'#7f77dd', moveX:-1, moveY:0.4,
+    desc:'Gyro-like spin creates late sweeping movement — hardest to identify'
+  },
+  curve: {
+    name:'Curveball', spin:'12-6 Topspin', velo:'72–82', rpm:'2,400–3,000',
+    move:'"Falls off table" — sharp down', break:'down',
+    spinDir: 1, spinAxis: 'top', color:'#4a9e6b', moveX:0, moveY:1.2,
+    desc:'High topspin + gravity = extreme downward break, 10+ inches'
+  },
+  change: {
+    name:'Changeup', spin:'Backspin (slow)', velo:'78–88', rpm:'1,500–1,800',
+    move:'Mimics fastball, fades arm-side', break:'fade',
+    spinDir: -1, spinAxis: 'back', color:'#e8a84a', moveX:0.3, moveY:0.3,
+    desc:'Same arm action as fastball — deception is the weapon, not movement'
+  }
+};
+
+let currentPitch = 'fastball';
+let spinAngle = 0;
+let animId;
+
+function setPitch(key, btn) {
+  document.querySelectorAll('.pbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentPitch = key;
+  renderPitchData();
+  spinAngle = 0;
+}
+
+function renderPitchData() {
+  const p = PITCHES[currentPitch];
+  const maxRPM = 3000;
+  const rpmNum = parseInt(p.rpm.split('–')[1]);
+  const veloNum = parseInt(p.velo.split('–')[1]);
+  document.getElementById('pitchData').innerHTML = `
+    <div class="prow">
+      <span class="prow-key">Velocity</span>
+      <span class="prow-val">${p.velo} mph</span>
+    </div>
+    <div style="padding:4px 0 8px">
+      <div class="prow-bar"><div class="prow-fill" style="width:${(veloNum/102)*100}%;background:${p.color}"></div></div>
+    </div>
+    <div class="prow">
+      <span class="prow-key">Spin rate</span>
+      <span class="prow-val">${p.rpm} RPM</span>
+    </div>
+    <div style="padding:4px 0 8px">
+      <div class="prow-bar"><div class="prow-fill" style="width:${(rpmNum/3000)*100}%;background:${p.color}"></div></div>
+    </div>
+    <div class="prow">
+      <span class="prow-key">Spin direction</span>
+      <span class="prow-val">${p.spin}</span>
+    </div>
+    <div class="prow">
+      <span class="prow-key">Movement</span>
+      <span class="prow-val">${p.move}</span>
+    </div>
+    <div style="margin-top:16px;padding:14px;background:var(--bg3);border-radius:4px;font-size:12px;color:var(--muted);line-height:1.6">${p.desc}</div>
+  `;
+}
+
+function drawPitchCanvas() {
+  const canvas = document.getElementById('pitchCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const p = PITCHES[currentPitch];
+  const cx = 140, cy = 140, r = 90;
+
+  ctx.clearRect(0, 0, 280, 280);
+
+  // Ball shadow
+  ctx.beginPath();
+  ctx.arc(cx+4, cy+4, r, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fill();
+
+  // Ball body
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fillStyle = '#f5f0e0';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Seams (rotate based on spinAngle)
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(spinAngle);
+  ctx.strokeStyle = '#c0392b';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  // Top seam
+  ctx.beginPath();
+  ctx.arc(0, -30, 42, Math.PI*0.9, Math.PI*0.1, false);
+  ctx.stroke();
+  // Bottom seam
+  ctx.beginPath();
+  ctx.arc(0, 30, 42, Math.PI*1.1, Math.PI*1.9, false);
+  ctx.stroke();
+  // Left seam
+  ctx.beginPath();
+  ctx.arc(-30, 0, 42, Math.PI*1.9, Math.PI*1.1, false);
+  ctx.stroke();
+  // Right seam
+  ctx.beginPath();
+  ctx.arc(30, 0, 42, Math.PI*0.1, Math.PI*0.9, false);
+  ctx.stroke();
+  ctx.restore();
+
+  // Spin direction arc arrow
+  const arrowR = r + 22;
+  ctx.beginPath();
+  ctx.arc(cx, cy, arrowR, -Math.PI*0.7, Math.PI*0.3, p.spinDir > 0);
+  ctx.strokeStyle = p.color;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5,3]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Arrowhead
+  const arrowEndAngle = p.spinDir > 0 ? Math.PI*0.3 : -Math.PI*0.7;
+  const ax = cx + arrowR * Math.cos(arrowEndAngle);
+  const ay = cy + arrowR * Math.sin(arrowEndAngle);
+  const tangentAngle = arrowEndAngle + (p.spinDir > 0 ? Math.PI/2 : -Math.PI/2);
+  ctx.beginPath();
+  ctx.moveTo(ax, ay);
+  ctx.lineTo(ax - 8*Math.cos(tangentAngle-0.4), ay - 8*Math.sin(tangentAngle-0.4));
+  ctx.moveTo(ax, ay);
+  ctx.lineTo(ax - 8*Math.cos(tangentAngle+0.4), ay - 8*Math.sin(tangentAngle+0.4));
+  ctx.strokeStyle = p.color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Movement arrow
+  const mvx = p.moveX * 55;
+  const mvy = p.moveY * 55;
+  if (Math.abs(mvx) + Math.abs(mvy) > 2) {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + mvx, cy + mvy);
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = 0.5;
+    ctx.stroke();
+    // arrowhead
+    const mag = Math.sqrt(mvx*mvx+mvy*mvy);
+    const ux = mvx/mag, uy = mvy/mag;
+    const ex = cx+mvx, ey = cy+mvy;
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - 10*(ux-uy*0.4), ey - 10*(uy+ux*0.4));
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - 10*(ux+uy*0.4), ey - 10*(uy-ux*0.4));
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // Spin label
+  ctx.font = '11px DM Mono, monospace';
+  ctx.fillStyle = p.color;
+  ctx.textAlign = 'center';
+  ctx.fillText(p.spin.toUpperCase(), cx, cy + r + 44);
+}
+
+function animatePitch() {
+  const p = PITCHES[currentPitch];
+  const rpmNum = parseInt(p.rpm.split('–')[1]);
+  const speed = (rpmNum / 2800) * 0.06 * p.spinDir;
+  spinAngle += speed;
+  drawPitchCanvas();
+  animId = requestAnimationFrame(animatePitch);
+}
+
+// ─── TIMELINE ───
+function updateTimeline(val) {
+  const canvas = document.getElementById('timelineCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const t = val / 100;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = 40;
+  const trackW = W - pad*2;
+  const trackY = H/2;
+
+  // Zones
+  // Read window: 0 to 42.5%
+  ctx.fillStyle = 'rgba(94,184,200,0.08)';
+  ctx.fillRect(pad, trackY-20, trackW*0.425, 40);
+  // Dead zone
+  ctx.fillStyle = 'rgba(200,136,42,0.05)';
+  ctx.fillRect(pad + trackW*0.425, trackY-20, trackW*0.5, 40);
+  // Contact
+  ctx.fillStyle = 'rgba(74,158,107,0.1)';
+  ctx.fillRect(pad + trackW*0.925, trackY-20, trackW*0.075, 40);
+
+  // Track line
+  ctx.beginPath();
+  ctx.moveTo(pad, trackY);
+  ctx.lineTo(pad + trackW, trackY);
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Ball trail
+  const ballX = pad + trackW * t;
+  ctx.beginPath();
+  ctx.moveTo(pad, trackY);
+  ctx.lineTo(ballX, trackY);
+  ctx.strokeStyle = 'rgba(94,184,200,0.4)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Commit line
+  const commitX = pad + trackW * 0.425;
+  ctx.beginPath();
+  ctx.moveTo(commitX, trackY-28);
+  ctx.lineTo(commitX, trackY+28);
+  ctx.strokeStyle = '#c85050';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4,3]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Ball
+  ctx.beginPath();
+  ctx.arc(ballX, trackY, 12, 0, Math.PI*2);
+  ctx.fillStyle = '#f5f0e0';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  // seams
+  ctx.beginPath();
+  ctx.arc(ballX-3, trackY, 6, Math.PI*0.9, Math.PI*0.1, false);
+  ctx.strokeStyle = '#c0392b';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(ballX+3, trackY, 6, Math.PI*1.9, Math.PI*1.1, false);
+  ctx.stroke();
+
+  // Labels
+  ctx.font = '10px DM Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#5eb8c8';
+  ctx.fillText('READ WINDOW', pad + trackW*0.21, trackY-26);
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.fillText('SWING COMMITTED', pad + trackW*0.675, trackY-26);
+  ctx.fillStyle = '#4a9e6b';
+  ctx.fillText('CONTACT', pad + trackW*0.962, trackY-26);
+  ctx.fillStyle = '#c85050';
+  ctx.fillText('DECIDE', commitX, trackY+42);
+
+  // Time label
+  const totalTime = 0.40;
+  const elapsed = (t * totalTime).toFixed(3);
+  ctx.font = '12px DM Mono, monospace';
+  ctx.fillStyle = '#5eb8c8';
+  ctx.textAlign = 'left';
+  ctx.fillText(`${elapsed}s elapsed`, pad, H-12);
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.textAlign = 'right';
+  ctx.fillText('0.40s total', pad+trackW, H-12);
+
+  // Status
+  const statusEl = document.getElementById('timelineStatus');
+  if (t < 0.425) {
+    statusEl.textContent = `→ Reading: release point, spin dot, early trajectory. ${(0.17 - t*0.40).toFixed(2)}s remaining to decide.`;
+    statusEl.style.color = '#5eb8c8';
+  } else if (t < 0.925) {
+    statusEl.textContent = '⚡ Past the commit point — swing is already in motion. Whatever pitch this is, the hitter is going.';
+    statusEl.style.color = '#c85050';
+  } else {
+    statusEl.textContent = '✓ Contact. Everything that determined this outcome was decided 240ms ago.';
+    statusEl.style.color = '#4a9e6b';
+  }
+}
+
+// ─── EXIT VELOCITY ───
+function updateEV() {
+  const bat = parseInt(document.getElementById('batSpeedSlider').value);
+  const pitch = parseInt(document.getElementById('pitchSpeedSlider').value);
+  document.getElementById('batSpeedVal').textContent = bat + ' mph';
+  document.getElementById('pitchSpeedVal').textContent = pitch + ' mph';
+
+  // Simplified EV formula: EV ≈ 1.23*bat + 0.14*pitch - 17
+  const ev = Math.round(1.23 * bat + 0.14 * pitch - 17);
+  document.getElementById('evResult').textContent = ev;
+
+  const tagEl = document.getElementById('evTag');
+  if (ev < 85) { tagEl.textContent = 'weak contact'; tagEl.className = 'result-tag tag-weak'; }
+  else if (ev < 95) { tagEl.textContent = 'average'; tagEl.className = 'result-tag tag-avg'; }
+  else if (ev < 98) { tagEl.textContent = 'hard hit'; tagEl.className = 'result-tag tag-hard'; }
+  else { tagEl.textContent = '🔥 barrel'; tagEl.className = 'result-tag tag-barrel'; }
+}
+
+// ─── LAUNCH ARC ───
+function updateArc() {
+  const angle = parseInt(document.getElementById('angleSlider').value);
+  const ev = parseInt(document.getElementById('evSlider').value);
+  document.getElementById('angleVal').textContent = angle + '°';
+  document.getElementById('evVal').textContent = ev + ' mph';
+
+  const canvas = document.getElementById('arcCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = 48;
+  const trackW = W - pad*2;
+  const groundY = H - 40;
+
+  // Ground
+  ctx.beginPath();
+  ctx.moveTo(pad, groundY);
+  ctx.lineTo(pad+trackW, groundY);
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Zone bands
+  const zones = [
+    {min:0, max:10, label:'Ground ball', color:'rgba(200,80,80,0.06)'},
+    {min:10, max:25, label:'Line drive', color:'rgba(94,184,200,0.06)'},
+    {min:25, max:38, label:'Home run window', color:'rgba(74,158,107,0.08)'},
+    {min:38, max:55, label:'Pop-up zone', color:'rgba(200,136,42,0.05)'}
+  ];
+
+  // Simulate trajectory
+  // Simplified: distance ∝ EV² * sin(2θ) / g, with air drag factor
+  const rad = angle * Math.PI / 180;
+  const v0 = ev * 0.44704; // to m/s
+  const g = 9.8;
+  const dragFactor = 0.55; // approximates air resistance
+  const totalDist = (v0 * v0 * Math.sin(2 * rad) * dragFactor) / g; // meters
+  const maxHeight = (v0 * v0 * Math.sin(rad) * Math.sin(rad) * dragFactor) / (2 * g);
+
+  const distFeet = totalDist * 3.281;
+  const heightFeet = maxHeight * 3.281;
+
+  // Scale to canvas
+  const maxPossibleDist = 180; // meters max for scaling
+  const scaleX = trackW / maxPossibleDist;
+  const maxH = groundY - 30;
+  const scaleY = maxH / 80; // 80m max height
+
+  // Draw trajectory
+  const steps = 120;
+  ctx.beginPath();
+  ctx.moveTo(pad, groundY);
+  let peaked = false;
+  for (let i = 1; i <= steps; i++) {
+    const frac = i / steps;
+    const t_flight = frac * (2 * v0 * Math.sin(rad)) / (g / dragFactor);
+    const x = v0 * Math.cos(rad) * t_flight * dragFactor;
+    const y = v0 * Math.sin(rad) * t_flight - 0.5 * (g / dragFactor) * t_flight * t_flight;
+    if (y < 0) break;
+    const cx = pad + x * scaleX;
+    const cy = groundY - y * scaleY;
+    if (i === 1) ctx.moveTo(pad, groundY);
+    ctx.lineTo(cx, cy);
+  }
+
+  // Color based on zone
+  let pathColor = '#c85050';
+  if (angle >= 10 && angle < 25) pathColor = '#5eb8c8';
+  else if (angle >= 25 && angle < 38) pathColor = '#4a9e6b';
+  else if (angle >= 38) pathColor = '#c8882a';
+
+  ctx.strokeStyle = pathColor;
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Landing dot
+  const landX = pad + totalDist * scaleX;
+  if (landX <= pad + trackW) {
+    ctx.beginPath();
+    ctx.arc(Math.min(landX, pad+trackW-4), groundY, 5, 0, Math.PI*2);
+    ctx.fillStyle = pathColor;
+    ctx.fill();
+  }
+
+  // Stats
+  ctx.font = '11px DM Mono, monospace';
+  ctx.fillStyle = pathColor;
+  ctx.textAlign = 'left';
+  const distStr = Math.round(distFeet) + ' ft';
+  const heightStr = Math.round(heightFeet) + ' ft peak';
+  ctx.fillText(distStr, Math.min(landX + 8, pad+trackW-80), groundY - 6);
+
+  // Zone label
+  let zoneLabel = '', zoneColor = '#888';
+  if (angle < 10) { zoneLabel = 'Ground ball'; zoneColor = '#c85050'; }
+  else if (angle < 25) { zoneLabel = 'Line drive'; zoneColor = '#5eb8c8'; }
+  else if (angle < 38) { zoneLabel = 'Home run window'; zoneColor = '#4a9e6b'; }
+  else { zoneLabel = 'Pop-up / deep fly'; zoneColor = '#c8882a'; }
+
+  // Angle indicator line
+  ctx.beginPath();
+  ctx.moveTo(pad, groundY);
+  ctx.lineTo(pad + 60*Math.cos(rad), groundY - 60*Math.sin(rad));
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3,3]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Outfield wall reference
+  const wallX = pad + 120 * scaleX; // ~390 ft
+  if (wallX < pad + trackW) {
+    ctx.beginPath();
+    ctx.moveTo(wallX, groundY-4);
+    ctx.lineTo(wallX, groundY - 30);
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.font = '10px DM Mono, monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.textAlign = 'center';
+    ctx.fillText('~390ft wall', wallX, groundY - 34);
+  }
+
+  const statusEl = document.getElementById('arcStatus');
+  statusEl.innerHTML = `<span style="color:${zoneColor}">${zoneLabel}</span> — estimated ${Math.round(distFeet)} ft carry, ${Math.round(heightFeet)} ft peak height`;
+}
+
+// ─── NAV ACTIVE STATE ───
+function updateNav() {
+  const sections = ['pitch','decision','contact','arc','defense'];
+  const scrollY = window.scrollY + 100;
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    const link = document.querySelector(`nav a[href="#${id}"]`);
+    if (!el || !link) return;
+    if (scrollY >= el.offsetTop && scrollY < el.offsetTop + el.offsetHeight) {
+      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+      link.classList.add('active');
+    }
+  });
+}
+
+// ─── SCROLL REVEAL ───
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+window.addEventListener('scroll', updateNav);
+
+// ─── INIT ───
+renderPitchData();
+animatePitch();
+updateTimeline(0);
+updateEV();
+updateArc();
+</script>
+</body>
+</html>
