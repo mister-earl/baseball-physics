@@ -402,6 +402,14 @@ canvas { display:block; max-width:100%; }
       <span class="stat-card-label">RPM — elite spin tier</span>
     </div>
   </div>
+
+  <div class="panel">
+    <p class="panel-label">Interactive — Explain it back to me</p>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">In your own words: why does spin make a pitch move? Doesn't need to be textbook — just explain the mechanism like you'd tell a friend.</p>
+    <textarea id="explainInput" rows="4" placeholder="Type your explanation here..." style="width:100%;background:var(--bg3);border:1px solid var(--bg3);color:var(--text);border-radius:4px;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;resize:vertical;box-sizing:border-box"></textarea>
+    <button class="pbtn" style="margin-top:10px" onclick="checkExplanation()" id="explainBtn">Check my explanation</button>
+    <div id="explainResult" style="margin-top:14px;padding:14px;background:var(--bg3);border-radius:4px;font-size:13px;color:var(--muted);line-height:1.6;display:none"></div>
+  </div>
 </section>
 
 <hr class="divider">
@@ -793,6 +801,61 @@ const PITCHES = {
     desc:'Same arm action as fastball — deception is the weapon, not movement'
   }
 };
+
+// ─── EXPLAIN IT BACK TO ME ───
+const SCORE_LABELS = [
+  "Not quite there yet",
+  "On the right track",
+  "Close — missing one piece",
+  "Nailed it"
+];
+
+async function checkExplanation() {
+  const input = document.getElementById('explainInput');
+  const btn = document.getElementById('explainBtn');
+  const result = document.getElementById('explainResult');
+  const explanation = input.value.trim();
+
+  if (explanation.length < 5) {
+    result.style.display = 'block';
+    result.style.color = 'var(--muted)';
+    result.textContent = 'Write a sentence or two first.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Checking...';
+  result.style.display = 'block';
+  result.style.color = 'var(--muted)';
+  result.textContent = 'Thinking...';
+
+  try {
+    const res = await fetch('/api/check-explanation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ section: 'pitch', explanation })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      result.style.color = 'var(--muted)';
+      result.textContent = "Couldn't check that right now — " + (data.error || 'try again in a bit.');
+      return;
+    }
+
+    const level = Math.round(data.score);
+    result.style.color = 'var(--blue)';
+    result.innerHTML =
+      '<strong style="color:var(--text)">' + SCORE_LABELS[level] + '</strong>' +
+      ' (score ' + data.score.toFixed(1) + ' / ' + data.maxScore + ', confidence ' + Math.round(data.confidence * 100) + '%)';
+  } catch (err) {
+    result.style.color = 'var(--muted)';
+    result.textContent = 'Something went wrong reaching the checker.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Check my explanation';
+  }
+}
 
 let currentPitch = 'fastball';
 let spinAngle = 0;
